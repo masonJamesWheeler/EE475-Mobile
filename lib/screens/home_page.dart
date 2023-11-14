@@ -1,48 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'sign_up_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-
 class HomePage extends StatelessWidget {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn googleSignIn = GoogleSignIn();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  Future<User?> _signInWithGoogle() async {
-    try {
-      final GoogleSignInAccount? googleSignInAccount = await googleSignIn.signIn();
-      if (googleSignInAccount != null) {
-        final GoogleSignInAuthentication googleSignInAuthentication = await googleSignInAccount.authentication;
-        final AuthCredential credential = GoogleAuthProvider.credential(
-          accessToken: googleSignInAuthentication.accessToken,
-          idToken: googleSignInAuthentication.idToken,
-        );
-        UserCredential userCredential = await _auth.signInWithCredential(credential);
-        _addUserToDatabase(userCredential.user);
-        return userCredential.user;
-      }
-    } catch (error) {
-      print(error);
-      return null;
-    }
-  }
+  final SupabaseClient _supabaseClient = SupabaseClient('https://zisysdvhxncmwqwsiuyo.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inppc3lzZHZoeG5jbXdxd3NpdXlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTU5NTQ3NDEsImV4cCI6MjAxMTUzMDc0MX0.OSpXd1SR1PYx-nt2LsFcFYQpRovCZCFjJF1oJlMWbAY');
 
   Future<void> _addUserToDatabase(User? user) async {
     if (user != null) {
-      final DocumentReference userDoc = _firestore.collection('users').doc(user.uid);
+      final response = await _supabaseClient
+          .from('users')
+          .select()
+          .eq('uid', user.id)
+          .execute();
 
-      final DocumentSnapshot doc = await userDoc.get();
-      if (!doc.exists) {
+      if (response.data == null || response.data.isEmpty) {
         // If user doesn't exist, add them to the database
-        await userDoc.set({
-          'uid': user.uid,
+        await _supabaseClient.from('users').insert({
+          'uid': user.id,
           'email': user.email,
-          'displayName': user.displayName,
-          'photoURL': user.photoURL,
-        });
+          // Add additional fields as necessary
+        }).execute();
       }
     }
   }
@@ -64,7 +42,7 @@ class HomePage extends StatelessWidget {
               SizedBox(height: 50), // Adjust this value to position the content higher
               Text(
                 'Welcome to Dog Collar App',
-                style: GoogleFonts.roboto( // Using a modern font
+                style: GoogleFonts.roboto(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -80,15 +58,6 @@ class HomePage extends StatelessWidget {
                   );
                 },
                 child: Text('Create Account with Email'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  User? user = await _signInWithGoogle();
-                  if (user != null) {
-                    print('Google Sign In Success: ${user.displayName}');
-                  }
-                },
-                child: Text('Sign In with Google'),
               ),
               Spacer(flex: 3), // This will push content up
             ],
