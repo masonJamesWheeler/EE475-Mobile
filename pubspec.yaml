@@ -1,4 +1,4 @@
-name: collar
+name: ee475_mobile
 description: A new Flutter project.
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -30,16 +30,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  google_sign_in: any
-  cloud_firestore: any
-  
-  google_fonts: any
-  
+    
+  supabase_flutter: ^1.6.2
+
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
-  supabase_flutter: ^1.10.25
-  
 
 dev_dependencies:
   flutter_test:
@@ -58,14 +55,10 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
 
-  assets:
-    - assets/bck.png
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

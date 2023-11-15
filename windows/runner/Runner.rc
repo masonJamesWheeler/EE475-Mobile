@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "collar" "\0"
+            VALUE "FileDescription", "ee475_mobile" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "collar" "\0"
+            VALUE "InternalName", "ee475_mobile" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2023 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "collar.exe" "\0"
-            VALUE "ProductName", "collar" "\0"
+            VALUE "OriginalFilename", "ee475_mobile.exe" "\0"
+            VALUE "ProductName", "ee475_mobile" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

@@ -1,4 +1,4 @@
-# collar
+# ee475_mobile
 
 A new Flutter project.
 
