@@ -40,30 +40,41 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Sign In')),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          TextFormField(
-            controller: _emailController,
-            decoration: const InputDecoration(labelText: 'Email'),
-            keyboardType: TextInputType.emailAddress,
-          ),
-          const SizedBox(height: 20),
-          TextFormField(
-            controller: _passwordController,
-            decoration: const InputDecoration(labelText: 'Password'),
-            obscureText: true, // Hides the password
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: _isLoading ? null : _signIn,
-            child: _isLoading ? const CircularProgressIndicator() : const Text('Sign In'),
-          ),
-        ],
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text('Sign In'),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () {
+          // This line will navigate back to the previous screen in the navigation stack
+          Navigator.of(context).pop();
+        },
       ),
-    );
-  }
+    ),
+    body: ListView(
+      padding: const EdgeInsets.all(16.0),
+      children: [
+        TextFormField(
+          controller: _emailController,
+          decoration: const InputDecoration(labelText: 'Email'),
+          keyboardType: TextInputType.emailAddress,
+        ),
+        const SizedBox(height: 20),
+        TextFormField(
+          controller: _passwordController,
+          decoration: const InputDecoration(labelText: 'Password'),
+          obscureText: true, // Hides the password
+        ),
+        const SizedBox(height: 20),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _signIn,
+          child: _isLoading ? const CircularProgressIndicator() : const Text('Sign In'),
+        ),
+      ],
+    ),
+  );
 }
+}
+
+

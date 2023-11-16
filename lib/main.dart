@@ -6,6 +6,7 @@ import 'pages/splash_page.dart';
 import 'pages/login_page.dart';
 import 'pages/signup_page.dart';
 import 'pages/account_page.dart';
+import 'pages/add_a_dog.dart';
 
 void main() async {
   await Supabase.initialize(
@@ -32,6 +33,8 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginPage(),
         '/signup': (context) => const SignUpPage(), // Add this line
         '/account': (context) => const AccountPage(),
+        '/add-a-dog': (context) => const AddADogPage(), // Add this line
+
       },
     );
   }

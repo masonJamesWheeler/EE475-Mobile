@@ -1,7 +1,5 @@
-// lib/pages/account_page.dart
-
 import 'package:flutter/material.dart';
-import '../main.dart'; // Ensure this is correctly imported from your project
+import '../main.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({Key? key}) : super(key: key);
@@ -11,7 +9,7 @@ class AccountPage extends StatefulWidget {
 }
 
 class _AccountPageState extends State<AccountPage> {
-  final _usernameController = TextEditingController();
+  String _userName = ''; // Variable to store the user's name
   bool _isLoading = false;
 
   @override
@@ -23,22 +21,34 @@ class _AccountPageState extends State<AccountPage> {
   Future<void> _loadUserData() async {
     setState(() => _isLoading = true);
 
-    final user = supabase.auth.currentUser;
-    if (user != null) {
-      // Load user data from Supabase
-      final response = await supabase
-          .from('users')
-          .select()
-          .eq('id', user.id)
-          .single()
-          .execute();
-
-      if (response.data != null) {
-        _usernameController.text = response.data['username'] ?? '';
+    try {
+      final user = supabase.auth.currentUser;
+      if (user == null) {
+        Navigator.of(context).pushReplacementNamed('/login');
+        return;
       }
+
+      // Fetch user data from your database
+      final response = await supabase.from('users')
+          .select('name')
+          .eq('id', user.id)
+          .maybeSingle();
+
+      if (response != null) {
+      String fullName = response['name'];
+      List<String> nameParts = fullName.split(' ');
+      String firstName = nameParts.first; // Extracts the first name
+
+      setState(() => _userName = firstName);
+    } else {
+      setState(() => _userName = 'No name');
     }
 
-    setState(() => _isLoading = false);
+    } catch (e) {
+      print('Error loading user data: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _signOut() async {
@@ -55,10 +65,14 @@ class _AccountPageState extends State<AccountPage> {
           : Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextFormField(
-                    controller: _usernameController,
-                    decoration: const InputDecoration(labelText: 'Username'),
+                  Text(
+                    'Hello, $_userName',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
@@ -68,6 +82,14 @@ class _AccountPageState extends State<AccountPage> {
                 ],
               ),
             ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Navigate to the add_a_dog page
+          Navigator.of(context).pushNamed('/add-a-dog');
+        },
+        child: const Icon(Icons.add),
+        tooltip: 'Add a Dog',
+      ),
     );
   }
 }

@@ -13,13 +13,15 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _nameController = TextEditingController(); // Controller for name input
   bool _isLoading = false;
 
-  Future<void> _updateUserProfile(String userId, String email) async {
-    final response = await supabase.from('users').upsert({
+  Future<void> _updateUserProfile(String userId, String email, String name) async {
+    await supabase.from('users').upsert({
       'id': userId,
       'email': email,
-    }).execute();
+      'name': name,
+    });
   }
 
   Future<void> _signUp() async {
@@ -32,21 +34,17 @@ class _SignUpPageState extends State<SignUpPage> {
       password: _passwordController.text.trim(),
     );
 
-    if (result.user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.toString())),
-      );
-    } else {
-      // Check if email and userid are not null
-      if (result.user!.email != null && result.user!.id != null) {
-        await _updateUserProfile(result.user!.id, result.user!.email!);
-      }
+    if (result.user != null && result.user!.email != null) {
+      await _updateUserProfile(result.user!.id, result.user!.email!, _nameController.text.trim());
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text(
-                'Registration successful! Please check your email to confirm your account.')),
+            content: Text('Registration successful! Please check your email to confirm your account.')),
       );
       Navigator.of(context).pop(); // Go back to the previous screen
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User registration failed, please try again.')),
+      );
     }
 
     setState(() {
@@ -71,6 +69,11 @@ class _SignUpPageState extends State<SignUpPage> {
             controller: _passwordController,
             decoration: const InputDecoration(labelText: 'Password'),
             obscureText: true,
+          ),
+          const SizedBox(height: 20),
+          TextFormField(
+            controller: _nameController,
+            decoration: const InputDecoration(labelText: 'Name'),
           ),
           const SizedBox(height: 20),
           ElevatedButton(
