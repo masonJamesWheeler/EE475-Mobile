@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
+import '../database_service.dart';
+import 'dog_details_page.dart';
+
+final dbService = DatabaseService();
 
 class AccountPage extends StatefulWidget {
   const AccountPage({Key? key}) : super(key: key);
@@ -9,8 +13,9 @@ class AccountPage extends StatefulWidget {
 }
 
 class _AccountPageState extends State<AccountPage> {
-  String _userName = ''; // Variable to store the user's name
+  String _userName = '';
   bool _isLoading = false;
+  List<Map<String, dynamic>> _dogs = []; // Add this line to store the dog data
 
   @override
   void initState() {
@@ -29,21 +34,27 @@ class _AccountPageState extends State<AccountPage> {
       }
 
       // Fetch user data from your database
-      final response = await supabase.from('users')
+      final response = await supabase
+          .from('users')
           .select('name')
           .eq('id', user.id)
           .maybeSingle();
 
       if (response != null) {
-      String fullName = response['name'];
-      List<String> nameParts = fullName.split(' ');
-      String firstName = nameParts.first; // Extracts the first name
+        String fullName = response['name'];
+        List<String> nameParts = fullName.split(' ');
+        String firstName = nameParts.first;
 
-      setState(() => _userName = firstName);
-    } else {
-      setState(() => _userName = 'No name');
+        setState(() => _userName = firstName);
+
+        var dogs = await dbService.fetchDogs();
+          if (dogs != null) {
+      setState(() => _dogs = dogs); // Update the _dogs variable with the fetched data
     }
 
+      } else {
+        setState(() => _userName = 'No name');
+      }
     } catch (e) {
       print('Error loading user data: $e');
     } finally {
@@ -56,40 +67,63 @@ class _AccountPageState extends State<AccountPage> {
     Navigator.of(context).pushReplacementNamed('/login');
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Account')),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Hello, $_userName',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(title: const Text('Account'),
+    ),
+    body: _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hello, $_userName',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _signOut,
-                    child: const Text('Sign Out'),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 20),
+                Expanded(
+                  child: ListView.builder(
+                  itemCount: _dogs.length,
+                  itemBuilder: (context, index) {
+                    var dog = _dogs[index];
+                    return Card(
+                      child: ListTile(
+                        title: Text(dog['name']),
+                        subtitle: Text('Breed: ${dog['breed']}, Weight: ${dog['weight']} lbs'),
+                        trailing: Icon(Icons.pets),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => DogDetailsPage(dogData: dog),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+                ),
+                ElevatedButton(
+                  onPressed: _signOut,
+                  child: const Text('Sign Out'),
+                ),
+              ],
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Navigate to the add_a_dog page
-          Navigator.of(context).pushNamed('/add-a-dog');
-        },
-        child: const Icon(Icons.add),
-        tooltip: 'Add a Dog',
-      ),
-    );
-  }
+          ),
+    floatingActionButton: FloatingActionButton(
+      onPressed: () {
+        Navigator.of(context).pushNamed('/add-a-dog');
+      },
+      child: const Icon(Icons.add),
+      tooltip: 'Add a Dog',
+    ),
+  );
 }
+}
+

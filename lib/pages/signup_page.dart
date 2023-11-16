@@ -55,7 +55,17 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign Up')),
+      appBar: AppBar(
+      title: const Text('Sign Up'),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () {
+          // This line will navigate back to the previous screen in the navigation stack
+          Navigator.of(context).pop();
+        },
+      ),
+    ),
+      
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
