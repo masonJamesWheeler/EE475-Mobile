@@ -70,22 +70,24 @@ class DatabaseService {
     }
   }
 
-  // Function to retrieve the image of a dog from Supabase Storage
-  Future<String> fetchDogImageURL(String imageID) async {
-    // Check if the user is logged in
-    if (supabase.auth.currentUser == null) {
-      return '';
-    }
-    // Retrieve the image as a signed URL
-    final response = await supabase.storage.from('Images').createSignedUrl(
-          imageID,
-          // This URL will expire in 1 hour
-          // You can adjust this value according to your needs
-          3600,
-        );
-
-    return response;
+// Function to retrieve the image of a dog from Supabase Storage
+// Function to retrieve the image of a dog from Supabase Storage
+Future<String> fetchDogImageURL(String imageID) async {
+  if (supabase.auth.currentUser == null) {
+    print('User not logged in');
+    return '';
   }
+  try {
+    // Directly return the signed URL from the response
+    final String signedUrl = await supabase.storage.from('Images').createSignedUrl(imageID, 3600);
+    print('Fetched URL: $signedUrl');
+    return signedUrl;
+  } catch (e) {
+    print('Exception when fetching image URL: $e');
+    return '';
+  }
+}
+
 
   Future<void> addDogWithImage({
     required String name,
@@ -138,8 +140,6 @@ class DatabaseService {
       'breed': breed,
       'weight': weight,
       'owner_id': ownerID,
-    }).execute();
+    });
   }
 }
-
-  
