@@ -66,6 +66,16 @@
 <key>NSMicrophoneUsageDescription</key>
 <string>Your usage description here</string>
 
+<key>NSBluetoothAlwaysUsageDescription</key>
+<string>The app uses bluetooth to find, connect and transfer data between different devices</string>
+<key>NSBluetoothPeripheralUsageDescription</key>
+<string>The app uses bluetooth to find, connect and transfer data between different devices</string>
+<key>UIBackgroundModes</key>
+<array>
+    <string>bluetooth-central</string>
+</array>
+
+
   
 </dict>
 </plist>

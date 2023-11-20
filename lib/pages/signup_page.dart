@@ -1,7 +1,6 @@
-// lib/pages/signup_page.dart
-
 import 'package:flutter/material.dart';
-import '../main.dart'; // Ensure this is correctly imported from your project
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase_provider;
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({Key? key}) : super(key: key);
@@ -17,11 +16,12 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _isLoading = false;
 
   Future<void> _updateUserProfile(String userId, String email, String name) async {
-    await supabase.from('users').upsert({
+    final supabaseClient = Provider.of<supabase_provider.SupabaseClient>(context, listen: false);
+    await supabaseClient.from('users').upsert({
       'id': userId,
       'email': email,
       'name': name,
-    });
+    }).execute();
   }
 
   Future<void> _signUp() async {
@@ -29,7 +29,8 @@ class _SignUpPageState extends State<SignUpPage> {
       _isLoading = true;
     });
 
-    final result = await supabase.auth.signUp(
+    final supabaseClient = Provider.of<supabase_provider.SupabaseClient>(context, listen: false);
+    final result = await supabaseClient.auth.signUp(
       email: _emailController.text.trim(),
       password: _passwordController.text.trim(),
     );
@@ -37,8 +38,7 @@ class _SignUpPageState extends State<SignUpPage> {
     if (result.user != null && result.user!.email != null) {
       await _updateUserProfile(result.user!.id, result.user!.email!, _nameController.text.trim());
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Registration successful! Please check your email to confirm your account.')),
+        const SnackBar(content: Text('Registration successful! Please check your email to confirm your account.')),
       );
       Navigator.of(context).pop(); // Go back to the previous screen
     } else {
@@ -51,7 +51,7 @@ class _SignUpPageState extends State<SignUpPage> {
       _isLoading = false;
     });
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(

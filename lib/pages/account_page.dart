@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../main.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase_provider;
+
 import '../database_service.dart';
 import 'dog_details_page.dart';
-
-final dbService = DatabaseService();
 
 class AccountPage extends StatefulWidget {
   const AccountPage({Key? key}) : super(key: key);
@@ -15,7 +15,7 @@ class AccountPage extends StatefulWidget {
 class _AccountPageState extends State<AccountPage> {
   String _userName = '';
   bool _isLoading = false;
-  List<Map<String, dynamic>> _dogs = []; // Add this line to store the dog data
+  List<Map<String, dynamic>> _dogs = [];
 
   @override
   void initState() {
@@ -27,18 +27,20 @@ class _AccountPageState extends State<AccountPage> {
     setState(() => _isLoading = true);
 
     try {
-      final user = supabase.auth.currentUser;
+      final supabaseClient = Provider.of<supabase_provider.SupabaseClient>(context, listen: false);
+      final user = supabaseClient.auth.currentUser;
       if (user == null) {
         Navigator.of(context).pushReplacementNamed('/login');
         return;
       }
 
-      // Fetch user data from your database
-      final response = await supabase
+      final response = await supabaseClient
           .from('users')
           .select('name')
           .eq('id', user.id)
           .maybeSingle();
+
+      final dbService = Provider.of<DatabaseService>(context, listen: false);
 
       if (response != null) {
         String fullName = response['name'];
@@ -48,10 +50,7 @@ class _AccountPageState extends State<AccountPage> {
         setState(() => _userName = firstName);
 
         var dogs = await dbService.fetchDogs();
-          if (dogs != null) {
-      setState(() => _dogs = dogs); // Update the _dogs variable with the fetched data
-    }
-
+        setState(() => _dogs = dogs);
       } else {
         setState(() => _userName = 'No name');
       }
@@ -63,9 +62,11 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _signOut() async {
-    await supabase.auth.signOut();
+    final supabaseClient = Provider.of<supabase_provider.SupabaseClient>(context, listen: false);
+    await supabaseClient.auth.signOut();
     Navigator.of(context).pushReplacementNamed('/login');
   }
+
 
  @override
 Widget build(BuildContext context) {

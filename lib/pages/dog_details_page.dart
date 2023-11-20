@@ -3,11 +3,11 @@ import '../database_service.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../main.dart';
 import 'package:intl/intl.dart';
-import 'dart:math';
+import 'start_walk_page.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase_provider;
 
 
-
-final dbService = DatabaseService();
 var walksDisplay = [];
 
 class DogDetailsPage extends StatefulWidget {
@@ -28,31 +28,36 @@ class _DogDetailsPageState extends State<DogDetailsPage> {
     _loadWalks();
   }
 
+  void _startWalk() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) => StartWalkPage(dogId: widget.dogData['dog_id']),
+    ));
+  }
+
+  // Load walks from Supabase
   Future<void> _loadWalks() async {
-  final response = await supabase
+    final supabaseClient = Provider.of<supabase_provider.SupabaseClient>(context, listen: false);
+
+    final response = await supabaseClient
       .from('walks')
       .select()
-      .eq('dog_id', widget.dogData['dog_id']);
-  
-  if (response != null && response is List) {
-    // Sort walks by date in ascending order for the chart
-    final walksData = List<Map<String, dynamic>>.from(
-        response.map((item) => item as Map<String, dynamic>))
+      .eq('dog_id', widget.dogData['dog_id'])
+      .execute();
+
+    if (response.data != null && response.data is List) {
+      final walksData = List<Map<String, dynamic>>.from(
+        response.data.map((item) => item as Map<String, dynamic>))
         ..sort((a, b) => a['date'].compareTo(b['date']));
     
-    setState(() {
-      walks = walksData;
-      // Reverse the list for display in the list view
-      walksDisplay = List.from(walksData.reversed);
-    });
+      setState(() {
+        walks = walksData;
+      });
+    }
   }
-}
 
   Future<String> _getDogImageURL() async {
-    final response =
-        await dbService.fetchDogImageURL(widget.dogData['dog_id'] + '.jpg');
-    print(response);
-    return response;
+    final dbService = Provider.of<DatabaseService>(context, listen: false);
+    return await dbService.fetchDogImageURL(widget.dogData['dog_id'] + '.jpg');
   }
 
   @override
@@ -78,6 +83,11 @@ class _DogDetailsPageState extends State<DogDetailsPage> {
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _startWalk,
+        label: Text('Start Walk with ${widget.dogData['name']}'),
+        icon: Icon(Icons.directions_walk),
       ),
     );
   }

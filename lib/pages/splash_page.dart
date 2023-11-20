@@ -1,7 +1,6 @@
-// lib/pages/splash_page.dart
-
 import 'package:flutter/material.dart';
-import '../main.dart'; // Ensure this is correctly imported from your project
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase_provider;
 
 class SplashPage extends StatefulWidget {
   const SplashPage({Key? key}) : super(key: key);
@@ -21,7 +20,8 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   void _checkSession() {
-    final session = supabase.auth.currentSession;
+    final supabaseClient = Provider.of<supabase_provider.SupabaseClient>(context, listen: false);
+    final session = supabaseClient.auth.currentSession;
     setState(() {
       _isLoggedIn = session != null;
       _isChecking = false;
@@ -63,4 +63,3 @@ class _SplashPageState extends State<SplashPage> {
     );
   }
 }
-

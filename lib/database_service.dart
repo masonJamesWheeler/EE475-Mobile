@@ -1,10 +1,11 @@
-import 'package:flutter/material.dart';
-import 'main.dart';
-import 'dart:io';
 import 'package:supabase/supabase.dart';
 import 'package:uuid/uuid.dart';
+import 'dart:io';
 
 class DatabaseService {
+  final SupabaseClient supabase;
+
+  DatabaseService({required this.supabase});
   // Function to fetch dogs from the database
   Future<List<Map<String, dynamic>>> fetchDogs() async {
     // Check if the user is logged in

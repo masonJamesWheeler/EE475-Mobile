@@ -1,7 +1,6 @@
-// lib/pages/login_page.dart
-
 import 'package:flutter/material.dart';
-import '../main.dart'; // Ensure this is correctly imported from your project
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase_provider;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -20,8 +19,10 @@ class _LoginPageState extends State<LoginPage> {
       _isLoading = true;
     });
 
+    final supabaseClient = Provider.of<supabase_provider.SupabaseClient>(context, listen: false);
+
     // Use signIn for email and password authentication
-    final result = await supabase.auth.signInWithPassword(
+    final result = await supabaseClient.auth.signInWithPassword(
       email: _emailController.text.trim(),
       password: _passwordController.text.trim(),
     );
@@ -39,6 +40,7 @@ class _LoginPageState extends State<LoginPage> {
       _isLoading = false;
     });
   }
+
   @override
 Widget build(BuildContext context) {
   return Scaffold(
