@@ -1,3 +1,8 @@
+/// This file contains the main entry point of the application and the root widget [MyApp].
+/// It imports necessary packages and initializes the Supabase client, FlutterReactiveBle,
+/// and other services. The [MyApp] widget is responsible for setting up the application's
+/// theme and defining the routes for different pages.
+import 'package:ee475_mobile/ble/ble_device_interactor.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase_provider;
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
@@ -24,14 +29,14 @@ void main() async {
   );
 
   final supabase = supabase_provider.Supabase.instance.client;
+  // Bluetooth related initializations
   final ble = FlutterReactiveBle();
   final bleLogger = BleLogger(ble: ble);
   final scanner = BleScanner(ble: ble, logMessage: bleLogger.addToLog);
   final monitor = BleStatusMonitor(ble);
-  final connector = BleDeviceConnector(
-    ble: ble,
-    logMessage: bleLogger.addToLog,
-  );
+  final connector = BleDeviceConnector(ble: ble, logMessage: bleLogger.addToLog);
+  final deviceInteractor = BleDeviceInteractor(bleDiscoverServices: ble.getDiscoveredServices, logMessage: bleLogger.addToLog);
+    
   final databaseService = DatabaseService(supabase: supabase);
 
   runApp(
@@ -40,15 +45,11 @@ void main() async {
         Provider<FlutterReactiveBle>(create: (_) => ble),
         Provider<BleScanner>(create: (_) => scanner),
         Provider<BleDeviceConnector>(create: (_) => connector),
-        Provider<supabase_provider.SupabaseClient>(create: (_) => supabase), // Add this line
-        StreamProvider<BleScannerState>(
-          create: (_) => scanner.state,
-          initialData: const BleScannerState(
-            discoveredDevices: [],
-            scanIsInProgress: false,
-          ),
-        ),
-       Provider<DatabaseService>(create: (_) => databaseService),
+        Provider<BleStatusMonitor>(create: (_) => monitor),
+        Provider<BleDeviceInteractor>(create: (_) => deviceInteractor),
+        StreamProvider<BleScannerState>(create: (_) => scanner.state, initialData: const BleScannerState(discoveredDevices: [], scanIsInProgress: false)),
+        Provider<supabase_provider.SupabaseClient>(create: (_) => supabase),
+        Provider<DatabaseService>(create: (_) => databaseService),
       ],
       child: MyApp(),
     ),
