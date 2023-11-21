@@ -1,187 +1,312 @@
-// Import necessary packages
-import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
+import '../../ble/ble_device_connector.dart';
+import '../../ble/ble_device_interactor.dart';
+import 'package:functional_data/functional_data.dart';
 import 'package:provider/provider.dart';
-import '../ble/ble_scanner.dart';
-import '../ble/ble_device_connector.dart';
-import '../ble/ble_status_monitor.dart';
-import '../ble/ble_device_interactor.dart';
-import '../ui/device_detail/device_detail_screen.dart';
 
-// Define the UUIDs for the service and characteristic
-const String SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
-const String CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
+import '../ui/device_detail/characteristic_interaction_dialog.dart';
+import '../ui/device_detail/device_interaction_tab.dart';
 
-// Define the StartWalkPage widget
-class StartWalkPage extends StatefulWidget {
-  final String dogId;
+// ignore_for_file: annotate_overrides
 
-  const StartWalkPage({Key? key, required this.dogId}) : super(key: key);
+class DeviceInteractionTab extends StatelessWidget {
+  const DeviceInteractionTab({
+    required this.device,
+    Key? key,
+  }) : super(key: key);
+
+  final DiscoveredDevice device;
 
   @override
-  _StartWalkPageState createState() => _StartWalkPageState();
+  Widget build(BuildContext context) =>
+      Consumer3<BleDeviceConnector, ConnectionStateUpdate, BleDeviceInteractor>(
+        builder: (_, deviceConnector, connectionStateUpdate, serviceDiscoverer,
+                __) =>
+            _DeviceInteractionTab(
+          viewModel: DeviceInteractionViewModel(
+            deviceId: device.id,
+            connectableStatus: device.connectable,
+            connectionStatus: connectionStateUpdate.connectionState,
+            deviceConnector: deviceConnector,
+            discoverServices: () =>
+                serviceDiscoverer.discoverServices(device.id),
+          ),
+        ),
+      );
 }
 
-// Define the state for the StartWalkPage widget
-class _StartWalkPageState extends State<StartWalkPage> {
-  // Declare variables
-  DiscoveredDevice? selectedDevice;
-  String? currentReading;
-  bool isConnected = false;
-  final TextEditingController _multiplierController = TextEditingController();
-  double multiplierValue = 1.0; // Initial multiplier value
+@immutable
+@FunctionalData()
+class DeviceInteractionViewModel extends $DeviceInteractionViewModel {
+  const DeviceInteractionViewModel({
+    required this.deviceId,
+    required this.connectableStatus,
+    required this.connectionStatus,
+    required this.deviceConnector,
+    required this.discoverServices,
+  });
 
-  // Globals
-  late FlutterReactiveBle _ble;
-  late BleScanner _ble_scanner;
-  late BleDeviceConnector _ble_device_connector;
-  late BleStatusMonitor _ble_status_monitor;
-  late BleDeviceInteractor _ble_device_interactor;
-  late StreamSubscription<BleStatus?> _ble_status_subscription;
+  final String deviceId;
+  final Connectable connectableStatus;
+  final DeviceConnectionState connectionStatus;
+  final BleDeviceConnector deviceConnector;
+
+  @CustomEquality(Ignore())
+  final Future<List<Service>> Function() discoverServices;
+
+  bool get deviceConnected =>
+      connectionStatus == DeviceConnectionState.connected;
+
+  void connect() {
+    deviceConnector.connect(deviceId);
+  }
+
+  void disconnect() {
+    deviceConnector.disconnect(deviceId);
+  }
+}
+
+class _DeviceInteractionTab extends StatefulWidget {
+  const _DeviceInteractionTab({
+    required this.viewModel,
+    Key? key,
+  }) : super(key: key);
+
+  final DeviceInteractionViewModel viewModel;
+
+  @override
+  _DeviceInteractionTabState createState() => _DeviceInteractionTabState();
+}
+
+class _DeviceInteractionTabState extends State<_DeviceInteractionTab> {
+  late List<Service> discoveredServices;
 
   @override
   void initState() {
+    discoveredServices = [];
     super.initState();
+  }
 
-    // Initialize the BLE field here
-    _ble = Provider.of<FlutterReactiveBle>(context, listen: false);
-    _ble_scanner = Provider.of<BleScanner>(context, listen: false);
-    _ble_device_connector =
-        Provider.of<BleDeviceConnector>(context, listen: false);
-    _ble_status_monitor = Provider.of<BleStatusMonitor>(context, listen: false);
-    _ble_device_interactor =
-        Provider.of<BleDeviceInteractor>(context, listen: false);
+  Future<void> discoverServices() async {
+    final result = await widget.viewModel.discoverServices();
+    setState(() {
+      discoveredServices = result;
+    });
   }
 
   @override
-  void dispose() {
-    _ble.deinitialize();
-    super.dispose();
+  Widget build(BuildContext context) => CustomScrollView(
+        slivers: [
+          SliverList(
+            delegate: SliverChildListDelegate.fixed(
+              [
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(
+                      top: 8.0, bottom: 16.0, start: 16.0),
+                  child: Text(
+                    "ID: ${widget.viewModel.deviceId}",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(start: 16.0),
+                  child: Text(
+                    "Connectable: ${widget.viewModel.connectableStatus}",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(start: 16.0),
+                  child: Text(
+                    "Connection: ${widget.viewModel.connectionStatus}",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget>[
+                      ElevatedButton(
+                        onPressed: !widget.viewModel.deviceConnected
+                            ? widget.viewModel.connect
+                            : null,
+                        child: const Text("Connect"),
+                      ),
+                      ElevatedButton(
+                        onPressed: widget.viewModel.deviceConnected
+                            ? widget.viewModel.disconnect
+                            : null,
+                        child: const Text("Disconnect"),
+                      ),
+                      ElevatedButton(
+                        onPressed: widget.viewModel.deviceConnected
+                            ? discoverServices
+                            : null,
+                        child: const Text("Discover Services"),
+                      ),
+                    ],
+                  ),
+                ),
+                if (widget.viewModel.deviceConnected)
+                  _ServiceDiscoveryList(
+                    deviceId: widget.viewModel.deviceId,
+                    discoveredServices: discoveredServices,
+                  ),
+              ],
+            ),
+          ),
+        ],
+      );
+}
+
+class _ServiceDiscoveryList extends StatefulWidget {
+  const _ServiceDiscoveryList({
+    required this.deviceId,
+    required this.discoveredServices,
+    Key? key,
+  }) : super(key: key);
+
+  final String deviceId;
+  final List<Service> discoveredServices;
+  
+  @override
+  _ServiceDiscoveryListState createState() => _ServiceDiscoveryListState();
+}
+
+class _ServiceDiscoveryListState extends State<_ServiceDiscoveryList> {
+  late final List<int> _expandedItems;
+  
+  @override
+  void initState() {
+    _expandedItems = [];
+    super.initState();
   }
 
-  // Connect to the selected device and navigate to the detail screen
-  Future<void> onSelectDevice(DiscoveredDevice device) async {
-    try {
-      // Connect to the device
-      await _ble_device_connector.connect(device.id);
+  String _characteristicSummary(Characteristic c) {
+    final props = <String>[];
+    if (c.isReadable) {
+      props.add("read");
+    }
+    if (c.isWritableWithoutResponse) {
+      props.add("write without response");
+    }
+    if (c.isWritableWithResponse) {
+      props.add("write with response");
+    }
+    if (c.isNotifiable) {
+      props.add("notify");
+    }
+    if (c.isIndicatable) {
+      props.add("indicate");
+    }
 
-      // Navigate to the DeviceDetailScreen
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => DeviceDetailScreen(device: device),
-        ),
-      );
+    return props.join("\n");
+  }
+
+Widget _characteristicTile(Characteristic characteristic) => ListTile(
+  onTap: () {
+    readCharacteristic(characteristic);
+    showDialog<void>(
+      context: context,
+      builder: (context) => CharacteristicInteractionDialog(characteristic: characteristic),
+    );
+  },
+  title: Text(
+    '${characteristic.id}\n(${_characteristicSummary(characteristic)})',
+    style: const TextStyle(fontSize: 14),
+  ),
+);
+
+
+
+  List<ExpansionPanel> buildPanels() {
+    // This is the line that we want
+    if (widget.discoveredServices[0].characteristics != null) {
+      readCharacteristic(widget.discoveredServices[0].characteristics[0]);
+    }
+    final panels = <ExpansionPanel>[];
+    widget.discoveredServices.asMap().forEach(
+          (index, service) => panels.add(
+            ExpansionPanel(
+              body: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Padding(
+                    padding: EdgeInsetsDirectional.only(start: 16.0),
+                    child: Text(
+                      'Characteristics',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: service.characteristics
+                        .map(_characteristicTile)
+                        .toList(),
+                  ),
+                ],
+              ),
+              headerBuilder: (context, isExpanded) => ListTile(
+                title: Text(
+                  '${service.id}',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+              isExpanded: _expandedItems.contains(index),
+            ),
+          ),
+        );
+
+    return panels;
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.discoveredServices.isEmpty
+      ? const SizedBox()
+      : SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsetsDirectional.only(
+              top: 20.0,
+              start: 20.0,
+              end: 20.0,
+            ),
+            child: ExpansionPanelList(
+              expansionCallback: (int index, bool isExpanded) {
+                setState(() {
+                  if (isExpanded) {
+                    _expandedItems.remove(index);
+                    print("Panel $index collapsed");
+                  } else {
+                    _expandedItems.add(index);
+                    print("Panel $index expanded");
+                  }
+                });
+              },
+              children: buildPanels(),
+            ),
+          ),
+        );
+
+        // Add a new field to hold the read value
+  List<int>? characteristicValue;
+
+  // Async method to read the characteristic
+  Future<void> readCharacteristic(Characteristic characteristic) async {
+    try {
+      final value = await characteristic.read();
+      setState(() {
+        characteristicValue = value;
+      });
+      print("Read value: $value");
     } catch (e) {
-      // Handle any errors that occur during connect
-      print('Error connecting to device: $e');
+      print("Error reading characteristic: $e");
     }
   }
-
-
-  // Start the walk
-  void onStartWalk() {
-    // Implement the logic to start the walk
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bleScannerState = Provider.of<BleScannerState?>(context) ??
-        const BleScannerState(discoveredDevices: [], scanIsInProgress: false);
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Start Walk')),
-      body: Center(
-        child: isConnected ? buildConnectedView() : buildDeviceListView(),
-      ),
-    );
-  }
-
-  // Build the UI for the connected view
-  Widget buildConnectedView() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        Text('Current Reading: $currentReading lbs'),
-        Slider(
-          value: multiplierValue,
-          min: 0.5,
-          max: 1.5,
-          divisions: 10,
-          label: multiplierValue.toStringAsFixed(1),
-          onChanged: (double value) {
-            setState(() {
-              multiplierValue = value;
-            });
-          },
-        ),
-        ElevatedButton(
-          onPressed: onStartWalk,
-          child: const Text('Start Walk'),
-        ),
-      ],
-    );
-  }
-
-  // Build the UI for the device list view
-  Widget buildDeviceListView() {
-    // Stream controller to manage the list of discovered devices
-    StreamController<List<DiscoveredDevice>> deviceListController =
-        StreamController();
-
-    // Start scanning for devices and add them to the stream controller
-    _ble
-        .scanForDevices(withServices: [])
-        .where((device) => device.name == "Dog Collar")
-        .listen((device) {
-          deviceListController.add([device]); // Add each device as a new list
-        });
-
-    return StreamBuilder<List<DiscoveredDevice>>(
-      stream: deviceListController.stream, // Use the custom stream controller
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
-
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(
-              child: const Text(
-                  "No Smart Collars nearby, make sure the collar is powered on and in range."));
-        }
-
-        final smartCollars = snapshot.data!;
-
-        return Column(
-          children: <Widget>[
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Stop Walk'),
-            ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: smartCollars.length,
-                itemBuilder: (context, index) {
-                  final device = smartCollars[index];
-                  return ListTile(
-                    title: Text(device.name ?? 'Unknown device'),
-                    subtitle: Text(device.id),
-                    trailing: selectedDevice?.id == device.id
-                        ? Icon(Icons.check)
-                        : null,
-                    onTap: () => onSelectDevice(device),
-                  );
-                },
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
 }
+
