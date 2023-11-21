@@ -1,11 +1,13 @@
+import 'package:ee475_mobile/ble/ble_logger.dart';
+import 'package:ee475_mobile/ble/ble_scanner.dart';
 import 'package:flutter/material.dart';
 import '../database_service.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../main.dart';
 import 'package:intl/intl.dart';
-import 'start_walk_page.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase_provider;
+import '../ui/device_list.dart';
 
 
 var walksDisplay = [];
@@ -28,10 +30,10 @@ class _DogDetailsPageState extends State<DogDetailsPage> {
     _loadWalks();
   }
 
-  void _startWalk() {
+void _startWalk() {
     Navigator.of(context).push(MaterialPageRoute(
-      builder: (context) => StartWalkPage(dogId: widget.dogData['dog_id']),
-    ));
+      builder: (context) => DeviceListScreen(dogId: widget.dogData['dog_id'], dogName: widget.dogData['name'])),
+    );
   }
 
   // Load walks from Supabase

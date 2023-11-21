@@ -43,11 +43,30 @@ void main() async {
     MultiProvider(
       providers: [
         Provider<FlutterReactiveBle>(create: (_) => ble),
+        Provider<BleLogger>(create: (_) => bleLogger),
         Provider<BleScanner>(create: (_) => scanner),
         Provider<BleDeviceConnector>(create: (_) => connector),
         Provider<BleStatusMonitor>(create: (_) => monitor),
         Provider<BleDeviceInteractor>(create: (_) => deviceInteractor),
-        StreamProvider<BleScannerState>(create: (_) => scanner.state, initialData: const BleScannerState(discoveredDevices: [], scanIsInProgress: false)),
+        StreamProvider<BleScannerState?>(
+          create: (_) => scanner.state,
+          initialData: const BleScannerState(
+            discoveredDevices: [],
+            scanIsInProgress: false,
+          ),
+        ),
+        StreamProvider<BleStatus?>(
+          create: (_) => monitor.state,
+          initialData: BleStatus.unknown,
+        ),
+        StreamProvider<ConnectionStateUpdate>(
+          create: (_) => connector.state,
+          initialData: const ConnectionStateUpdate(
+            deviceId: 'Unknown device',
+            connectionState: DeviceConnectionState.disconnected,
+            failure: null,
+          ),        
+        ),
         Provider<supabase_provider.SupabaseClient>(create: (_) => supabase),
         Provider<DatabaseService>(create: (_) => databaseService),
       ],

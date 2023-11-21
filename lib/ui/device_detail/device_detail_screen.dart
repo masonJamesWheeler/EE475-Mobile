@@ -8,26 +8,35 @@ import 'device_interaction_tab.dart';
 
 class DeviceDetailScreen extends StatelessWidget {
   final DiscoveredDevice device;
+  final String dog_id;
+  final String dog_name;
 
-  const DeviceDetailScreen({required this.device, Key? key}) : super(key: key);
+  const DeviceDetailScreen({required this.device, required this.dog_id, required this.dog_name, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) => Consumer<BleDeviceConnector>(
         builder: (_, deviceConnector, __) => _DeviceDetail(
           device: device,
+          dog_id: dog_id,
+          dog_name: dog_name,
           disconnect: deviceConnector.disconnect,
         ),
       );
 }
 
+
 class _DeviceDetail extends StatelessWidget {
   const _DeviceDetail({
     required this.device,
+    required this.dog_id,
+    required this.dog_name,
     required this.disconnect,
     Key? key,
   }) : super(key: key);
 
   final DiscoveredDevice device;
+  final String dog_id;
+  final String dog_name;
   final void Function(String deviceId) disconnect;
   @override
   Widget build(BuildContext context) => WillPopScope(
@@ -59,6 +68,8 @@ class _DeviceDetail extends StatelessWidget {
               children: [
                 DeviceInteractionTab(
                   device: device,
+                  dog_id: dog_id,
+                  dog_name: dog_name,
                 ),
                 const DeviceLogTab(),
               ],
