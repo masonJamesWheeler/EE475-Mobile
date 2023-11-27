@@ -81,7 +81,7 @@ void initState() {
     
     // Filter the discovered devices based on their names
     final filteredDevices = scannerState.discoveredDevices
-        .where((device) => device.name.contains('Dog Collar'))
+        .where((device) => device.name.contains('Smart Collar'))
         .toList();
 
     return Scaffold(
