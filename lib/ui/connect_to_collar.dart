@@ -17,6 +17,7 @@ class DeviceListScreen extends StatelessWidget {
     required this.dogName,
   }) : super(key: key);
   
+  
   @override
   Widget build(BuildContext context) {
     final bleScanner = Provider.of<BleScanner>(context, listen: false);
@@ -53,11 +54,13 @@ class _DeviceList extends StatefulWidget {
 }
 
 class _DeviceListState extends State<_DeviceList> {
-  @override
-  void initState() {
-    super.initState();
-    widget.startScan([]); // Start scanning immediately
-  }
+// In _DeviceListState
+@override
+void initState() {
+  super.initState();
+  widget.startScan([]); // Start scanning immediately
+  WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {}));
+}
 
   @override
   void dispose() {
@@ -98,7 +101,7 @@ class _DeviceListState extends State<_DeviceList> {
                         title: Text(device.name.isNotEmpty ? device.name : "Unnamed"),
                         subtitle: Text("${device.id}\nRSSI: ${device.rssi}\n${device.connectable}"),
                         leading: const BluetoothIcon(),
-                        onTap: () async {
+                          onTap: () async {
                           widget.stopScan();
                           await Navigator.push<void>(
                             context,
@@ -107,9 +110,9 @@ class _DeviceListState extends State<_DeviceList> {
                                 device: device,
                                 dog_id: widget.dogId,
                                 dog_name: widget.dogName,
+                              ),
                             ),
-                            ),
-                          );
+                          ).then((_) => setState(() {})); // Add this line
                         },
                       );
                     },

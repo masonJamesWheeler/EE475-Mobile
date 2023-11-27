@@ -93,7 +93,7 @@ class _DeviceInteractionTabState extends State<_DeviceInteractionTab> {
   double threshold = 0.0;
   int totalReadings = 0;
   bool isWalking = false;
-  
+
   String sensorData = "No data";
   Characteristic? currentCharacteristic;
   StreamController<String> sensorDataStreamController = StreamController();
@@ -154,16 +154,23 @@ class _DeviceInteractionTabState extends State<_DeviceInteractionTab> {
   void dispose() {
     sensorDataStreamSubscription?.cancel();
     sensorDataStreamController.close();
+    widget.viewModel.disconnect();
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+@override
+Widget build(BuildContext context) {
+  return WillPopScope(
+    onWillPop: () async {
+      widget.viewModel.disconnect(); // Disconnect from the device
+      return true; // Return true to allow the screen to be popped
+    },
+    child: Scaffold(
       appBar: AppBar(
         title: Text(widget.viewModel.deviceConnected
             ? "Connected to ${widget.viewModel.dog_name}'s Collar"
             : "Connecting..."),
+        automaticallyImplyLeading: false,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -179,7 +186,10 @@ class _DeviceInteractionTabState extends State<_DeviceInteractionTab> {
             Text("Sensor Data: $sensorData"),
           ],
         ),
-      ),
-    );
-  }
+      )
+    ),
+  );
 }
+}
+
+
