@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:uuid/uuid.dart';
 import '../database_service.dart';
 
 class AddADogPage extends StatefulWidget {
@@ -31,12 +30,9 @@ class _AddADogPageState extends State<AddADogPage> {
   void _submitData() {
     final dbService = Provider.of<DatabaseService>(context, listen: false);
     
-    var uuid = Uuid();
-    String dogId = uuid.v4(); // Generates a unique ID for each dog
     String name = _nameController.text.trim();
     String breed = _breedController.text.trim();
     int weight = int.parse(_weightController.text.trim());
-    String imageID = dogId + '.jpg';
 
     if (_imageFile == null) {
       dbService.addDog(name: name, breed: breed, weight: weight);

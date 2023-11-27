@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' as supabase_provider;
+import '../database_service.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({Key? key}) : super(key: key);
@@ -16,8 +16,8 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _isLoading = false;
 
   Future<void> _updateUserProfile(String userId, String email, String name) async {
-    final supabaseClient = Provider.of<supabase_provider.SupabaseClient>(context, listen: false);
-    await supabaseClient.from('users').upsert({
+    final database = Provider.of<DatabaseService>(context, listen: false);
+    await database.supabase.from('users').upsert({
       'id': userId,
       'email': email,
       'name': name,
@@ -29,18 +29,17 @@ class _SignUpPageState extends State<SignUpPage> {
       _isLoading = true;
     });
 
-    final supabaseClient = Provider.of<supabase_provider.SupabaseClient>(context, listen: false);
-    final result = await supabaseClient.auth.signUp(
+    final database = Provider.of<DatabaseService>(context, listen: false);
+
+    final result = await database.supabase.auth.signUp(
       email: _emailController.text.trim(),
       password: _passwordController.text.trim(),
     );
 
     if (result.user != null && result.user!.email != null) {
       await _updateUserProfile(result.user!.id, result.user!.email!, _nameController.text.trim());
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Registration successful! Please check your email to confirm your account.')),
-      );
-      Navigator.of(context).pop(); // Go back to the previous screen
+      database.authState.login(); // Update AuthState on successful signup
+      Navigator.of(context).pushReplacementNamed('/account');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('User registration failed, please try again.')),

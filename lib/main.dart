@@ -36,8 +36,8 @@ void main() async {
   final monitor = BleStatusMonitor(ble);
   final connector = BleDeviceConnector(ble: ble, logMessage: bleLogger.addToLog);
   final deviceInteractor = BleDeviceInteractor(bleDiscoverServices: ble.getDiscoveredServices, logMessage: bleLogger.addToLog);
-    
-  final databaseService = DatabaseService(supabase: supabase);
+  final authState = AuthState(); // Create an instance of AuthState
+
 
   runApp(
     MultiProvider(
@@ -67,8 +67,10 @@ void main() async {
             failure: null,
           ),        
         ),
-        Provider<supabase_provider.SupabaseClient>(create: (_) => supabase),
-        Provider<DatabaseService>(create: (_) => databaseService),
+        ChangeNotifierProvider(create: (_) => authState),
+        Provider<DatabaseService>(
+          create: (_) => DatabaseService(supabase: supabase, authState: authState),
+        ),
       ],
       child: MyApp(),
     ),

@@ -1,17 +1,16 @@
+import 'package:flutter/material.dart';
 import 'package:supabase/supabase.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:io';
 
 class DatabaseService {
   final SupabaseClient supabase;
+  final AuthState authState;
 
-  DatabaseService({required this.supabase});
-  // Function to fetch dogs from the database
+  DatabaseService({required this.supabase, required this.authState});
+
+  // Use authState.isLoggedIn in your methods to check if the user is logged in
   Future<List<Map<String, dynamic>>> fetchDogs() async {
-    // Check if the user is logged in
-    if (supabase.auth.currentUser == null) {
-      return [];
-    }
     // Get the user_id
     String ownerID = supabase.auth.currentUser!.id;
     // Search through the database for dogs with the same owner_id
@@ -32,10 +31,6 @@ class DatabaseService {
 
   // Function to find out how many walks have been logged total for a given dog
   Future<int> fetchTotalWalks(String dogID) async {
-    // Check if the user is logged in
-    if (supabase.auth.currentUser == null) {
-      return 0;
-    }
     // Search through the database for walks with the same dog_id
     final response = await supabase.from('walks').select().eq('dog_id', dogID);
 
@@ -52,10 +47,6 @@ class DatabaseService {
 
   // Function to fetch walks from the database
   Future<List<Map<String, dynamic>>> fetchWalks(String dogID) async {
-    // Check if the user is logged in
-    if (supabase.auth.currentUser == null) {
-      return [];
-    }
     // Search through the database for walks with the same dog_id
     final response = await supabase.from('walks').select().eq('dog_id', dogID);
 
@@ -74,10 +65,6 @@ class DatabaseService {
 // Function to retrieve the image of a dog from Supabase Storage
 // Function to retrieve the image of a dog from Supabase Storage
 Future<String> fetchDogImageURL(String imageID) async {
-  if (supabase.auth.currentUser == null) {
-    print('User not logged in');
-    return '';
-  }
   try {
     // Directly return the signed URL from the response
     final String signedUrl = await supabase.storage.from('Images').createSignedUrl(imageID, 3600);
@@ -89,18 +76,12 @@ Future<String> fetchDogImageURL(String imageID) async {
   }
 }
 
-
   Future<void> addDogWithImage({
     required String name,
     required String breed,
     required int weight,
     required File imageFile,
   }) async {
-    // Check if a user is logged in
-    if (supabase.auth.currentUser == null) {
-      throw Exception('You must be logged in to add a dog.');
-    }
-
     var uuid = Uuid();
     String dogId = uuid.v4(); // Generates a unique ID for each dog
     String ownerID = supabase.auth.currentUser!.id;
@@ -125,11 +106,7 @@ Future<String> fetchDogImageURL(String imageID) async {
     required String breed,
     required int weight,
   }) async {
-    // Check if a user is logged in
-    if (supabase.auth.currentUser == null) {
-      throw Exception('You must be logged in to add a dog.');
-    }
-
+    
     var uuid = Uuid();
     String dogId = uuid.v4(); // Generates a unique ID for each dog
     String ownerID = supabase.auth.currentUser!.id;
@@ -144,3 +121,20 @@ Future<String> fetchDogImageURL(String imageID) async {
     });
   }
 }
+
+class AuthState with ChangeNotifier {
+  bool _isLoggedIn = false;
+
+  bool get isLoggedIn => _isLoggedIn;
+
+  void login() {
+    _isLoggedIn = true;
+    notifyListeners();
+  }
+
+  void logout() {
+    _isLoggedIn = false;
+    notifyListeners();
+  }
+}
+

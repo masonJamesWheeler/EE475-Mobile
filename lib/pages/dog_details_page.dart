@@ -1,19 +1,15 @@
-import 'package:ee475_mobile/ble/ble_logger.dart';
-import 'package:ee475_mobile/ble/ble_scanner.dart';
 import 'package:flutter/material.dart';
 import '../database_service.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../main.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' as supabase_provider;
 import '../ui/connect_to_collar.dart';
-
 
 var walksDisplay = [];
 
 class DogDetailsPage extends StatefulWidget {
   final Map<String, dynamic> dogData;
+  
 
   const DogDetailsPage({Key? key, required this.dogData}) : super(key: key);
 
@@ -22,7 +18,7 @@ class DogDetailsPage extends StatefulWidget {
 }
 
 class _DogDetailsPageState extends State<DogDetailsPage> {
-  List<Map<String, dynamic>> walks = [];
+  List<Map<String, dynamic>> walks = [];  
 
   @override
   void initState() {
@@ -38,9 +34,9 @@ void _startWalk() {
 
   // Load walks from Supabase
   Future<void> _loadWalks() async {
-    final supabaseClient = Provider.of<supabase_provider.SupabaseClient>(context, listen: false);
+    final database = Provider.of<DatabaseService>(context, listen: false);
 
-    final response = await supabaseClient
+    final response = await database.supabase
       .from('walks')
       .select()
       .eq('dog_id', widget.dogData['dog_id'])
@@ -58,8 +54,8 @@ void _startWalk() {
   }
 
   Future<String> _getDogImageURL() async {
-    final dbService = Provider.of<DatabaseService>(context, listen: false);
-    return await dbService.fetchDogImageURL(widget.dogData['dog_id'] + '.jpg');
+    final database = Provider.of<DatabaseService>(context, listen: false);
+    return await database.fetchDogImageURL(widget.dogData['dog_id'] + '.jpg');
   }
 
   @override

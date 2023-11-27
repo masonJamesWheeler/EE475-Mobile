@@ -3,10 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import '../ble/ble_scanner.dart';
 import 'package:provider/provider.dart';
-import '../main.dart';
 import '../ble/ble_logger.dart';
 import 'widgets.dart';
-import 'device_detail/device_detail_screen.dart';
+import './device_detail/dog_walk_scaffolding.dart';
 
 class DeviceListScreen extends StatelessWidget {
   final String dogId;
