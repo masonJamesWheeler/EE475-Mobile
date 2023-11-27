@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'device_interaction_tab.dart';
+part of '../../pages/dog_walk.dart';
 
 // **************************************************************************
 // FunctionalDataGenerator

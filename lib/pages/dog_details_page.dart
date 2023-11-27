@@ -7,7 +7,7 @@ import '../main.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase_provider;
-import '../ui/device_list.dart';
+import '../ui/connect_to_collar.dart';
 
 
 var walksDisplay = [];

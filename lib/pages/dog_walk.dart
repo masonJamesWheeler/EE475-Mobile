@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
-import '../../ble/ble_device_connector.dart';
-import '../../ble/ble_device_interactor.dart';
+import '../ble/ble_device_connector.dart';
+import '../ble/ble_device_interactor.dart';
 import 'package:functional_data/functional_data.dart';
 import 'package:provider/provider.dart';
 
-part 'device_interaction_tab.g.dart';
+part '../ui/device_detail/device_interaction_tab.g.dart';
 
 class DeviceInteractionTab extends StatelessWidget {
   const DeviceInteractionTab({
@@ -89,7 +89,11 @@ class _DeviceInteractionTab extends StatefulWidget {
 }
 
 class _DeviceInteractionTabState extends State<_DeviceInteractionTab> {
+  int pullCount = 0;
+  double threshold = 0.0;
+  int totalReadings = 0;
   bool isWalking = false;
+  
   String sensorData = "No data";
   Characteristic? currentCharacteristic;
   StreamController<String> sensorDataStreamController = StreamController();

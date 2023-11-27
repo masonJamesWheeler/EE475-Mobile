@@ -4,7 +4,7 @@ import '../../ble/ble_device_connector.dart';
 import 'device_log_tab.dart';
 import 'package:provider/provider.dart';
 
-import 'device_interaction_tab.dart';
+import '../../pages/dog_walk.dart';
 
 class DeviceDetailScreen extends StatelessWidget {
   final DiscoveredDevice device;
