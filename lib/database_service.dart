@@ -120,6 +120,26 @@ Future<String> fetchDogImageURL(String imageID) async {
       'owner_id': ownerID,
     });
   }
+
+  // Function to add a walk to the database
+  Future<void> addWalk({
+    required String dogID,
+    required double avg_pull,
+    required int num_pulls
+
+  }) async {
+    var walkID = Uuid();
+    String date = DateTime.now().toString().substring(0, 10);
+
+    // Insert the new walk into the database
+    await supabase.from('walks').upsert({
+      'walk_id': walkID,
+      'dog_id': dogID,
+      'avg_pull': avg_pull,
+      'num_pulls': num_pulls,
+      'date': date,
+    });
+  }
 }
 
 class AuthState with ChangeNotifier {
