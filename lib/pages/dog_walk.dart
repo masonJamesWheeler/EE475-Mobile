@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import '../ble/ble_device_connector.dart';
@@ -91,7 +92,7 @@ class _DeviceInteractionTabState extends State<_DeviceInteractionTab> {
   int pullCount = 0;
   double currentReading = 0.0;
   double avgPull = 0.0;
-  double threshold = 0.0;
+  double threshold = 100000.0;
   int totalReadings = 0;
   bool isWalking = false;
   bool isPulling = false;
@@ -115,6 +116,7 @@ class _DeviceInteractionTabState extends State<_DeviceInteractionTab> {
       if (services.isNotEmpty && services[0].characteristics.isNotEmpty) {
         currentCharacteristic = services[0].characteristics[0];
         sensorReadTimer = Timer.periodic(Duration(milliseconds: 500), (Timer t) => readCharacteristic());
+        print("Reaching here");
         startSensorDataStream();
         setState(() => isWalking = true);
       } else {
@@ -137,7 +139,6 @@ class _DeviceInteractionTabState extends State<_DeviceInteractionTab> {
     try {
       final value = await currentCharacteristic!.read();
       totalReadings++;
-      print(value);
       sensorDataStreamController.add(value.toString());
     } catch (e) {
       print("Error reading characteristic: $e");
@@ -146,31 +147,63 @@ class _DeviceInteractionTabState extends State<_DeviceInteractionTab> {
 
   void startSensorDataStream() {
     sensorDataStreamSubscription = sensorDataStreamController.stream.listen((sensorValue) {
-      setState(() {
-        isInitializing = sensorValue.startsWith("Initializing");
+      // Parse the string to get the byte array
+      var bytes = parseStringToBytes(sensorValue);
+
+      // Convert the byte array to an integer
+      var intValue = _bytesToInt(bytes);
+      print(intValue);
+        isInitializing = sensorValue.contains("1953066569");
         if (isInitializing) {
           initializationProgress = sensorValue;
         } else {
-          currentReading = double.tryParse(sensorValue) ?? 0.0;
+          setState(() {
+          currentReading = intValue.toDouble();
+          });
           updatePulls(currentReading);
           updateAveragePull(currentReading);
         }
       });
-    });
   }
 
   void updateAveragePull(double reading) {
+    setState(() {
+    });
     avgPull += ((reading - avgPull) / totalReadings);
   }
 
   void updatePulls(double reading) {
+    setState(() {
     if (reading > threshold && !isPulling) {
       pullCount++;
       isPulling = true;
     } else if (reading < threshold) {
       isPulling = false;
     }
+    });
   }
+
+  int _bytesToInt(List<int> bytes) {
+  // Convert List<int> to Uint8List
+  var uint8list = Uint8List.fromList(bytes);
+  
+  // Create a ByteData view from the Uint8List
+  var byteData = ByteData.view(uint8list.buffer);
+
+  // Get the integer value with the correct endianness
+  return byteData.getInt32(0, Endian.little);
+}
+
+List<int> parseStringToBytes(String str) {
+  // Remove the brackets and spaces
+  var cleanedStr = str.replaceAll(RegExp(r'[\[\] ]'), '');
+
+  // Split the string by commas
+  var parts = cleanedStr.split(',');
+
+  // Convert each part to an integer and return the list
+  return parts.map(int.parse).toList();
+}
 
   @override
   void dispose() {
@@ -197,12 +230,10 @@ Widget build(BuildContext context) {
           if (widget.viewModel.deviceConnected && isInitializing)
             Column(
               children: [
-                CircularProgressIndicator(), // Shows a loading indicator
                 SizedBox(height: 20),
                 Text(initializationProgress),
               ],
             ),
-          if (widget.viewModel.deviceConnected && !isInitializing)
             Column(
               children: [
                 ElevatedButton(
