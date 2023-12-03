@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'add_a_dog.dart';
 
 import '../database_service.dart';
 import 'dog_details_page.dart';
@@ -58,6 +59,13 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
+  Future<void> reloadDogs() async {
+  final database = Provider.of<DatabaseService>(context, listen: false);
+  var dogs = await database.fetchDogs();
+  setState(() => _dogs = dogs);
+}
+
+
   Future<void> _signOut() async {
     final database = Provider.of<DatabaseService>(context, listen: false);
     database.authState.logout();
@@ -79,7 +87,12 @@ class _AccountPageState extends State<AccountPage> {
         body: _buildBody(),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            Navigator.of(context).pushNamed('/add-a-dog');
+            Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => AddADogPage(onDogAdded: reloadDogs),
+                ),
+              );
+
           },
           child: const Icon(Icons.add),
           tooltip: 'Add a Dog',

@@ -6,7 +6,7 @@ import '../ble/ble_device_connector.dart';
 import '../ble/ble_device_interactor.dart';
 import 'package:functional_data/functional_data.dart';
 import 'package:provider/provider.dart';
-
+import 'package:ee475_mobile/database_service.dart';
 part '../ui/device_detail/device_interaction_tab.g.dart';
 
 class DeviceInteractionTab extends StatelessWidget {
@@ -92,7 +92,7 @@ class _DeviceInteractionTabState extends State<_DeviceInteractionTab> {
   int pullCount = 0;
   double currentReading = 0.0;
   double avgPull = 0.0;
-  double threshold = 100000.0;
+  double threshold = 20;
   int totalReadings = 0;
   bool isWalking = false;
   bool isPulling = false;
@@ -132,6 +132,12 @@ class _DeviceInteractionTabState extends State<_DeviceInteractionTab> {
     sensorDataStreamSubscription?.cancel();
     sensorDataStreamController.add("No data");
     setState(() => isWalking = false);
+    
+    // End the walk
+    final database = Provider.of<DatabaseService>(context, listen: false);
+    print(widget.viewModel.dog_id.toString());
+    database.addWalk(dogID: widget.viewModel.dog_id.toString(), avg_pull: avgPull, num_pulls: pullCount);
+
   }
 
   Future<void> readCharacteristic() async {
@@ -159,6 +165,11 @@ class _DeviceInteractionTabState extends State<_DeviceInteractionTab> {
         } else {
           setState(() {
           currentReading = intValue.toDouble();
+          // Divide by a constant of dog_power vroom
+          double dog_power = 10000;
+          currentReading = currentReading / dog_power;
+          // Keep 2 decimal places
+          currentReading = double.parse(currentReading.toStringAsFixed(2));
           });
           updatePulls(currentReading);
           updateAveragePull(currentReading);
@@ -170,6 +181,7 @@ class _DeviceInteractionTabState extends State<_DeviceInteractionTab> {
     setState(() {
     });
     avgPull += ((reading - avgPull) / totalReadings);
+    avgPull = double.parse(avgPull.toStringAsFixed(2));
   }
 
   void updatePulls(double reading) {
@@ -205,6 +217,11 @@ List<int> parseStringToBytes(String str) {
   return parts.map(int.parse).toList();
 }
 
+  // Function to ensure values are not below zero
+  String safeDisplay(num value) {
+    return (value < 0) ? "0" : value.toString();
+  }
+
   @override
   void dispose() {
     sensorReadTimer?.cancel();
@@ -216,40 +233,56 @@ List<int> parseStringToBytes(String str) {
 
 @override
 Widget build(BuildContext context) {
+  ThemeData themeData = Theme.of(context);
+
   return Scaffold(
     appBar: AppBar(
-      title: Text(widget.viewModel.deviceConnected
-          ? "Connected to ${widget.viewModel.dog_name}'s Collar"
-          : "Connecting..."),
+      title: Text(
+        widget.viewModel.deviceConnected
+            ? "Connected to ${widget.viewModel.dog_name}'s Collar"
+            : "Connecting...",
+        style: themeData.textTheme.headline6,
+      ),
+      backgroundColor: themeData.primaryColor,
     ),
     body: Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: ListView(
         children: [
           if (widget.viewModel.deviceConnected && isInitializing)
-            Column(
-              children: [
-                SizedBox(height: 20),
-                Text(initializationProgress),
-              ],
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20.0),
+              child: Text(
+                initializationProgress,
+                style: themeData.textTheme.subtitle1,
+              ),
             ),
-            Column(
-              children: [
-                ElevatedButton(
-                  onPressed: isWalking ? stopWalk : startWalk,
-                  child: Text(isWalking ? 'Stop Walk' : 'Start Walk'),
-                ),
-                SizedBox(height: 20),
-                Text("Current Reading: $currentReading"),
-                Text("Total Pull: $avgPull"),
-                Text("Pulls over Threshold: $pullCount"),
-              ],
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                primary: const Color.fromARGB(255, 226, 226, 226),
+                onPrimary: Color.fromARGB(255, 18, 53, 177),
+              ),
+              onPressed: isWalking ? stopWalk : startWalk,
+              child: Text(isWalking ? 'Stop Walk' : 'Start Walk'),
             ),
+          ),
+          ListTile(
+            leading: Icon(Icons.speed, color: themeData.highlightColor),
+            title: Text("Current Reading: ${safeDisplay(currentReading)} Dog Power"),
+          ),
+          ListTile(
+            leading: Icon(Icons.trending_up, color: themeData.highlightColor),
+            title: Text("Average Pull During Walk: ${safeDisplay(avgPull)} Dog Power"),
+          ),
+          ListTile(
+            leading: Icon(Icons.fitness_center, color: themeData.highlightColor),
+            title: Text("Pulls over Threshold: ${safeDisplay(pullCount)}"),
+          ),
         ],
       ),
     ),
   );
 }
 }
-

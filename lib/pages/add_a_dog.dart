@@ -5,7 +5,8 @@ import 'package:provider/provider.dart';
 import '../database_service.dart';
 
 class AddADogPage extends StatefulWidget {
-  const AddADogPage({Key? key}) : super(key: key);
+  final Function onDogAdded;
+  const AddADogPage({Key? key, required this.onDogAdded}) : super(key: key);
 
   @override
   _AddADogPageState createState() => _AddADogPageState();
@@ -44,7 +45,8 @@ class _AddADogPageState extends State<AddADogPage> {
         imageFile: File(_imageFile!.path),
       );
     }
-
+    // reload the dogs list
+    widget.onDogAdded();
     Navigator.pop(context);
   }
 

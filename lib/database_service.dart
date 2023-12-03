@@ -128,7 +128,8 @@ Future<String> fetchDogImageURL(String imageID) async {
     required int num_pulls
 
   }) async {
-    var walkID = Uuid();
+    Uuid uuid = Uuid();
+    String walkID = uuid.v4(); // Generates a unique ID for each walk
     String date = DateTime.now().toString().substring(0, 10);
 
     // Insert the new walk into the database

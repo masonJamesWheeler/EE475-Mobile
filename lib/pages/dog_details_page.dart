@@ -192,7 +192,7 @@ Widget _buildChart() {
     child: LineChart(
       LineChartData(
         minY: 0,
-        maxY: 100,
+        maxY: 10,
         maxX: maxX,
         lineTouchData: LineTouchData(enabled: false),
         titlesData: FlTitlesData(
