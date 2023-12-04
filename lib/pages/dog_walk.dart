@@ -128,17 +128,20 @@ class _DeviceInteractionTabState extends State<_DeviceInteractionTab> {
   }
 
   Future<void> stopWalk() async {
-    sensorReadTimer?.cancel();
-    sensorDataStreamSubscription?.cancel();
-    sensorDataStreamController.add("No data");
-    setState(() => isWalking = false);
-    
-    // End the walk
-    final database = Provider.of<DatabaseService>(context, listen: false);
-    print(widget.viewModel.dog_id.toString());
-    database.addWalk(dogID: widget.viewModel.dog_id.toString(), avg_pull: avgPull, num_pulls: pullCount);
+      sensorReadTimer?.cancel();
+      sensorDataStreamSubscription?.cancel();
+      sensorDataStreamController.add("No data");
+      setState(() => isWalking = false);
+      
+      // End the walk and record data
+      final database = Provider.of<DatabaseService>(context, listen: false);
+      await database.addWalk(dogID: widget.viewModel.dog_id.toString(), avg_pull: avgPull, num_pulls: pullCount);
 
+      // Pop off the current and the previous page
+      Navigator.pop(context);
+      Navigator.pop(context); 
   }
+
 
   Future<void> readCharacteristic() async {
     if (currentCharacteristic == null) return;
